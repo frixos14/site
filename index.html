@@ -1,26 +1,36 @@
 
-<!DOCTYPE html>
+DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>API Connector</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>BINANCE // TERMINAL</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <main class="container">
+  <div class="noise"></div>
+
+  <main class="terminal">
     <header>
-      <h1>API Connector</h1>
-      <p>Conectando dados em tempo real</p>
+      <h1>BINANCE<span>API</span></h1>
+      <p>Terminal de mercado — Spot</p>
     </header>
 
-    <button id="btnCarregar">Carregar usuários</button>
+    <section class="controls">
+      <input id="symbol" placeholder="EX: BTCUSDT" value="BTCUSDT" />
+      <button id="btn">CONSULTAR</button>
+    </section>
 
-    <section id="status"></section>
+    <section id="status" class="status"></section>
 
-    <section id="lista" class="lista"></section>
+    <section id="resultado" class="card hidden">
+      <h2 id="par"></h2>
+      <div class="preco">
+        <span>$</span><strong id="preco"></strong>
+      </div>
+    </section>
   </main>
 
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
