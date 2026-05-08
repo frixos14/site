@@ -1,41 +1,39 @@
 
-onst botao = document.getElementById("btnCarregar");
-const lista = document.getElementById("lista");
+const btn = document.getElementById("btn");
+const symbolInput = document.getElementById("symbol");
 const status = document.getElementById("status");
+const card = document.getElementById("resultado");
+const par = document.getElementById("par");
+const preco = document.getElementById("preco");
 
-botao.addEventListener("click", carregarUsuarios);
+btn.addEventListener("click", consultar);
 
-async function carregarUsuarios() {
-  lista.innerHTML = "";
-  status.textContent = "Carregando dados da API...";
+async function consultar() {
+  const symbol = symbolInput.value.toUpperCase().trim();
+  card.classList.add("hidden");
+  status.textContent = "Consultando Binance...";
 
   try {
-    const resposta = await fetch(
-      "https://jsonplaceholder.typicode.com/users"
+    const res = await fetch(
+      `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`
     );
 
-    if (!resposta.ok) {
-      throw new Error("Erro ao acessar a API");
+    if (!res.ok) {
+      throw new Error("Par inválido ou indisponível");
     }
 
-    const dados = await resposta.json();
+    const data = await res.json();
 
-    status.textContent = `✅ ${dados.length} usuários carregados`;
-
-    dados.forEach(usuario => {
-      const card = document.createElement("div");
-      card.classList.add("card");
-
-      card.innerHTML = `
-        <h3>${usuario.name}</h3>
-        <span>${usuario.email}</span><br />
-        <span>${usuario.company.name}</span>
-      `;
-
-      lista.appendChild(card);
+    par.textContent = data.symbol;
+    preco.textContent = Number(data.price).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
 
-  } catch (erro) {
-    status.innerHTML = `<span style="color: var(--danger)">❌ ${erro.message}</span>`;
+    status.textContent = "✔ Dados recebidos da Binance";
+    card.classList.remove("hidden");
+
+  } catch (err) {
+    status.textContent = "❌ " + err.message;
   }
 }
