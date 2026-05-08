@@ -1,36 +1,35 @@
 
-DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>BINANCE // TERMINAL</title>
-  <link rel="stylesheet" href="style.css">
+  <title>BINANCE MARKET TERMINAL</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <div class="noise"></div>
+<main class="terminal">
+  <header>
+    <h1>BINANCE<span>TERMINAL</span></h1>
+    <p>Market data • realtime • spot</p>
+  </header>
 
-  <main class="terminal">
-    <header>
-      <h1>BINANCE<span>API</span></h1>
-      <p>Terminal de mercado — Spot</p>
-    </header>
+  <section class="controls">
+    <input id="symbol" value="BTCUSDT" />
+    <button id="start">INICIAR</button>
+  </section>
 
-    <section class="controls">
-      <input id="symbol" placeholder="EX: BTCUSDT" value="BTCUSDT" />
-      <button id="btn">CONSULTAR</button>
-    </section>
+  <section class="ticker">
+    <div class="label">PREÇO AO VIVO</div>
+    <div id="price" class="price">--</div>
+  </section>
 
-    <section id="status" class="status"></section>
+  <canvas id="chart"></canvas>
 
-    <section id="resultado" class="card hidden">
-      <h2 id="par"></h2>
-      <div class="preco">
-        <span>$</span><strong id="preco"></strong>
-      </div>
-    </section>
-  </main>
+  <footer id="status"></footer>
+</main>
 
-  <script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
