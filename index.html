@@ -3,33 +3,563 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>BINANCE MARKET TERMINAL</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Binance Candle Terminal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Martian+Mono:wght@300;500;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+  <style>
+    :root {
+      --bg: #070807;
+      --panel: #0d0f0d;
+      --panel-2: #11140f;
+      --text: #f4f0df;
+      --muted: #7f836f;
+      --line: rgba(240, 185, 11, 0.22);
+      --yellow: #f0b90b;
+      --yellow-soft: rgba(240, 185, 11, 0.14);
+      --green: #00d084;
+      --red: #ff4d4d;
+      --border: rgba(244, 240, 223, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 80% 10%, rgba(240, 185, 11, 0.16), transparent 28%),
+        linear-gradient(135deg, rgba(240, 185, 11, 0.05) 0 1px, transparent 1px 40px),
+        var(--bg);
+      font-family: "Martian Mono", monospace;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.025) 0px,
+          rgba(255,255,255,0.025) 1px,
+          transparent 1px,
+          transparent 4px
+        );
+      mix-blend-mode: overlay;
+      opacity: 0.35;
+      z-index: 10;
+    }
+
+    .shell {
+      width: min(1220px, calc(100% - 32px));
+      margin: 28px auto;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.035), transparent),
+        rgba(13,15,13,0.92);
+      box-shadow:
+        0 30px 100px rgba(0,0,0,0.55),
+        inset 0 0 0 1px rgba(240,185,11,0.04);
+      position: relative;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      padding: 26px;
+      border-bottom: 1px solid var(--border);
+      background:
+        linear-gradient(90deg, rgba(240,185,11,0.08), transparent 42%),
+        var(--panel);
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .brand small {
+      color: var(--yellow);
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Unbounded", sans-serif;
+      font-size: clamp(28px, 5vw, 62px);
+      line-height: 0.95;
+      letter-spacing: -0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 span {
+      color: var(--yellow);
+    }
+
+    .market-state {
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 260px;
+    }
+
+    .live-pill {
+      border: 1px solid var(--line);
+      color: var(--yellow);
+      padding: 8px 12px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: var(--yellow-soft);
+    }
+
+    .price {
+      font-family: "Unbounded", sans-serif;
+      font-size: clamp(24px, 4vw, 48px);
+      letter-spacing: -0.06em;
+    }
+
+    .toolbar {
+      padding: 18px 26px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.7fr auto;
+      gap: 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel-2);
+    }
+
+    input,
+    select,
+    button {
+      height: 48px;
+      border: 1px solid var(--border);
+      background: #090a08;
+      color: var(--text);
+      font-family: "Martian Mono", monospace;
+      font-size: 13px;
+      outline: none;
+    }
+
+    input,
+    select {
+      padding: 0 14px;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 4px rgba(240,185,11,0.08);
+    }
+
+    button {
+      padding: 0 22px;
+      background: var(--yellow);
+      color: #141100;
+      border-color: var(--yellow);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metric {
+      padding: 18px 26px;
+      border-right: 1px solid var(--border);
+    }
+
+    .metric:last-child {
+      border-right: none;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 8px;
+    }
+
+    .metric strong {
+      font-size: 15px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 620px;
+      padding: 18px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+        #070807;
+      background-size: 44px 44px;
+    }
+
+    #chart {
+      width: 100%;
+      height: 100%;
+    }
+
+    .watermark {
+      position: absolute;
+      left: 34px;
+      top: 34px;
+      color: rgba(244,240,223,0.055);
+      font-family: "Unbounded", sans-serif;
+      font-size: clamp(58px, 11vw, 140px);
+      letter-spacing: -0.1em;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+    }
+
+    .statusbar {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 26px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      background: #090a08;
+    }
+
+    .ok {
+      color: var(--green);
+    }
+
+    .err {
+      color: var(--red);
+    }
+
+    @media (max-width: 820px) {
+      .topbar,
+      .toolbar,
+      .meta {
+        grid-template-columns: 1fr;
+      }
+
+      .market-state {
+        align-items: flex-start;
+      }
+
+      .metric {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .chart-wrap {
+        height: 480px;
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <main class="shell">
+    <section class="topbar">
+      <div class="brand">
+        <small>Binance Spot Market</small>
+        <h1>Candle<span>Terminal</span></h1>
+      </div>
 
-<main class="terminal">
-  <header>
-    <h1>BINANCE<span>TERMINAL</span></h1>
-    <p>Market data • realtime • spot</p>
-  </header>
+      <div class="market-state">
+        <div class="live-pill" id="connectionState">offline</div>
+        <div class="price" id="livePrice">--</div>
+      </div>
+    </section>
 
-  <section class="controls">
-    <input id="symbol" value="BTCUSDT" />
-    <button id="start">INICIAR</button>
-  </section>
+    <section class="toolbar">
+      <input id="symbolInput" value="BTCUSDT" placeholder="Ex: BTCUSDT, ETHUSDT, SOLUSDT" />
 
-  <section class="ticker">
-    <div class="label">PREÇO AO VIVO</div>
-    <div id="price" class="price">--</div>
-  </section>
+      <select id="intervalInput">
+        <option value="1m">1 minuto</option>
+        <option value="3m">3 minutos</option>
+        <option value="5m">5 minutos</option>
+        <option value="15m">15 minutos</option>
+        <option value="30m">30 minutos</option>
+        <option value="1h">1 hora</option>
+        <option value="4h">4 horas</option>
+        <option value="1d">1 dia</option>
+      </select>
 
-  <canvas id="chart"></canvas>
+      <button id="loadButton">CARREGAR</button>
+    </section>
 
-  <footer id="status"></footer>
-</main>
+    <section class="meta">
+      <div class="metric">
+        <span>Par</span>
+        <strong id="pairMetric">BTCUSDT</strong>
+      </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="app.js"></script>
+      <div class="metric">
+        <span>Intervalo</span>
+        <strong id="intervalMetric">1m</strong>
+      </div>
+
+      <div class="metric">
+        <span>Último candle</span>
+        <strong id="candleMetric">--</strong>
+      </div>
+
+      <div class="metric">
+        <span>Fonte</span>
+        <strong>Binance API</strong>
+      </div>
+    </section>
+
+    <section class="chart-wrap">
+      <div class="watermark" id="watermark">BTC</div>
+      <div id="chart"></div>
+    </section>
+
+    <footer class="statusbar">
+      <span id="statusText">Aguardando inicialização...</span>
+      <span>REST + WebSocket</span>
+    </footer>
+  </main>
+
+  <script>
+    const symbolInput = document.getElementById("symbolInput");
+    const intervalInput = document.getElementById("intervalInput");
+    const loadButton = document.getElementById("loadButton");
+
+    const livePrice = document.getElementById("livePrice");
+    const connectionState = document.getElementById("connectionState");
+    const statusText = document.getElementById("statusText");
+
+    const pairMetric = document.getElementById("pairMetric");
+    const intervalMetric = document.getElementById("intervalMetric");
+    const candleMetric = document.getElementById("candleMetric");
+    const watermark = document.getElementById("watermark");
+
+    let chart;
+    let candleSeries;
+    let socket;
+
+    function criarGrafico() {
+      const container = document.getElementById("chart");
+
+      const {
+        createChart,
+        CandlestickSeries
+      } = LightweightCharts;
+
+      chart = createChart(container, {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        layout: {
+          background: { color: "#070807" },
+          textColor: "#7f836f",
+          fontFamily: "Martian Mono"
+        },
+        grid: {
+          vertLines: { color: "rgba(244,240,223,0.045)" },
+          horzLines: { color: "rgba(244,240,223,0.045)" }
+        },
+        crosshair: {
+          mode: 1
+        },
+        rightPriceScale: {
+          borderColor: "rgba(244,240,223,0.12)"
+        },
+        timeScale: {
+          borderColor: "rgba(244,240,223,0.12)",
+          timeVisible: true,
+          secondsVisible: false
+        }
+      });
+
+      candleSeries = chart.addSeries(CandlestickSeries, {
+        upColor: "#00d084",
+        downColor: "#ff4d4d",
+        borderUpColor: "#00d084",
+        borderDownColor: "#ff4d4d",
+        wickUpColor: "#00d084",
+        wickDownColor: "#ff4d4d"
+      });
+
+      window.addEventListener("resize", () => {
+        chart.applyOptions({
+          width: container.clientWidth,
+          height: container.clientHeight
+        });
+      });
+    }
+
+    function formatarPreco(valor) {
+      return Number(valor).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 8
+      });
+    }
+
+    function formatarHora(timestampSegundos) {
+      return new Date(timestampSegundos * 1000).toLocaleString("pt-BR");
+    }
+
+    async function carregarCandles() {
+      const symbol = symbolInput.value.trim().toUpperCase();
+      const interval = intervalInput.value;
+
+      if (!symbol) {
+        mostrarErro("Digite um par válido, exemplo: BTCUSDT");
+        return;
+      }
+
+      fecharSocket();
+
+      pairMetric.textContent = symbol;
+      intervalMetric.textContent = interval;
+      watermark.textContent = symbol.replace("USDT", "");
+
+      connectionState.textContent = "carregando";
+      connectionState.className = "live-pill";
+      statusText.textContent = "Buscando candles históricos na Binance...";
+
+      try {
+        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=250`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error("Não foi possível buscar dados. Verifique o par informado.");
+        }
+
+        const dados = await response.json();
+
+        if (!Array.isArray(dados)) {
+          throw new Error("Resposta inesperada da Binance.");
+        }
+
+        const candles = dados.map(candle => ({
+          time: Math.floor(candle[0] / 1000),
+          open: Number(candle[1]),
+          high: Number(candle[2]),
+          low: Number(candle[3]),
+          close: Number(candle[4])
+        }));
+
+        candleSeries.setData(candles);
+        chart.timeScale().fitContent();
+
+        const ultimo = candles[candles.length - 1];
+
+        livePrice.textContent = formatarPreco(ultimo.close);
+        candleMetric.textContent = formatarHora(ultimo.time);
+
+        statusText.innerHTML = `<span class="ok">Histórico carregado.</span> Abrindo WebSocket em tempo real...`;
+
+        abrirSocket(symbol, interval);
+
+      } catch (error) {
+        mostrarErro(error.message);
+      }
+    }
+
+    function abrirSocket(symbol, interval) {
+      const stream = `${symbol.toLowerCase()}@kline_${interval}`;
+      const url = `wss://stream.binance.com:9443/ws/${stream}`;
+
+      socket = new WebSocket(url);
+
+      socket.onopen = () => {
+        connectionState.textContent = "ao vivo";
+        connectionState.className = "live-pill ok";
+        statusText.innerHTML = `<span class="ok">WebSocket conectado.</span> Atualizando candle em tempo real.`;
+      };
+
+      socket.onmessage = event => {
+        const mensagem = JSON.parse(event.data);
+        const kline = mensagem.k;
+
+        if (!kline) return;
+
+        const candleAtual = {
+          time: Math.floor(kline.t / 1000),
+          open: Number(kline.o),
+          high: Number(kline.h),
+          low: Number(kline.l),
+          close: Number(kline.c)
+        };
+
+        candleSeries.update(candleAtual);
+
+        livePrice.textContent = formatarPreco(candleAtual.close);
+        candleMetric.textContent = formatarHora(candleAtual.time);
+
+        if (kline.x) {
+          statusText.innerHTML = `<span class="ok">Candle fechado.</span> Novo candle sendo formado.`;
+        }
+      };
+
+      socket.onerror = () => {
+        mostrarErro("Erro no WebSocket da Binance.");
+      };
+
+      socket.onclose = () => {
+        connectionState.textContent = "offline";
+        connectionState.className = "live-pill";
+      };
+    }
+
+    function fecharSocket() {
+      if (socket) {
+        socket.close();
+        socket = null;
+      }
+    }
+
+    function mostrarErro(mensagem) {
+      connectionState.textContent = "erro";
+      connectionState.className = "live-pill err";
+      statusText.innerHTML = `<span class="err">${mensagem}</span>`;
+    }
+
+    loadButton.addEventListener("click", carregarCandles);
+
+    symbolInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        carregarCandles();
+      }
+    });
+
+    criarGrafico();
+    carregarCandles();
+  </script>
 </body>
 </html>
+
